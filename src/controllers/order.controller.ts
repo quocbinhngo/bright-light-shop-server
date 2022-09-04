@@ -2,9 +2,23 @@ import { Request, Response } from "express";
 import { get } from "lodash";
 
 import { UserDocument } from "../models/user.model";
-import { checkDuplicateItem, createOrder, findOrder, findOrders, getOrderDetailsWithItem, getOrderResponse, processOrder, returnOrder, saveRewardPoint } from "../services/order.service";
+import {
+  checkDuplicateItem,
+  createOrder,
+  findOrder,
+  findOrders,
+  getOrderDetailsWithItem,
+  getOrderResponse,
+  processOrder,
+  returnOrder,
+  saveRewardPoint,
+} from "../services/order.service";
 import { findUser } from "../services/user.service";
-import { CreateOrderPayload, ReturnOrderPayload } from "../validations/order.validation";
+import paginatorUtil from "../utils/paginator.util";
+import {
+  CreateOrderPayload,
+  ReturnOrderPayload,
+} from "../validations/order.validation";
 
 export async function createOrderHandler(
   req: Request<{}, {}, CreateOrderPayload["body"]>,
@@ -102,13 +116,14 @@ export async function createOrderWithRewardPointHandler(
 }
 
 export async function getAllOrdersHandler(req: Request, res: Response) {
+  const page = req.query.page ? +req.query.page : 1;
   const user = res.locals.user as UserDocument;
   const orders = await findOrders({ customerId: user._id });
   const ordersResponse = await Promise.all(
     orders.map(async (order) => await getOrderResponse(order))
   );
 
-  return res.status(200).json(ordersResponse);
+  return res.status(200).json(paginatorUtil.paginate(ordersResponse, page));
 }
 
 export async function returnOrderHandler(
@@ -125,7 +140,7 @@ export async function returnOrderHandler(
   }
 
   const isOntime = await returnOrder(orderId, userId);
-  
+
   if (!isOntime) {
     const balance = ((await findUser({ _id: userId })) as UserDocument).balance;
 

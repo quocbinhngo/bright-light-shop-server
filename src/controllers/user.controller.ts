@@ -2,8 +2,23 @@ import { NextFunction, Request, Response } from "express";
 import { get, omit } from "lodash";
 
 import { UserDocument } from "../models/user.model";
-import { createUser, findUser, findUsers, getMaxCustomerCode, getUserFullName, getUserIdentifier, getUserResponse, hashPassword, updateUser } from "../services/user.service";
-import { AddBalancePayload, CreateAccountPayload, UpdateUserPayload } from "../validations/user.validation";
+import {
+  createUser,
+  findUser,
+  findUsers,
+  getMaxCustomerCode,
+  getUserFullName,
+  getUserIdentifier,
+  getUserResponse,
+  hashPassword,
+  updateUser,
+} from "../services/user.service";
+import paginatorUtil from "../utils/paginator.util";
+import {
+  AddBalancePayload,
+  CreateAccountPayload,
+  UpdateUserPayload,
+} from "../validations/user.validation";
 
 export async function getUserHandler(req: Request, res: Response) {
   try {
@@ -43,12 +58,8 @@ export async function createCustomerAccountHandler(
       return res.status(400).json("Username is already exists");
     }
 
-
-
     const hashedPassword = await hashPassword(password);
     const customerCode = ((await getMaxCustomerCode()) || 0) + 1;
-
-
 
     const user = await createUser({
       customerCode,
@@ -61,8 +72,6 @@ export async function createCustomerAccountHandler(
       accountType: "guest",
     });
 
-
-
     const userResponse = getUserResponse(user);
 
     return res.status(201).json(userResponse);
@@ -73,6 +82,7 @@ export async function createCustomerAccountHandler(
 
 export async function getCustomershandler(req: Request, res: Response) {
   const { accountType, desc } = req.query;
+  const page = req.query.page ? +req.query.page : 1;
   const sortBy = req.query.sortBy as string;
   const sort = { [sortBy]: desc ? -1 : 1 };
 
@@ -83,20 +93,22 @@ export async function getCustomershandler(req: Request, res: Response) {
     customers = await findUsers({ accountType }, { sort });
   }
 
-
-  return res.status(200).json(customers);
+  return res.status(200).json(paginatorUtil.paginate(customers, page));
 }
 
 export async function searchCustomersHandler(req: Request, res: Response) {
+  const page = req.query.page ? +req.query.page : 1;
   const search = (req.query.search as string).toLowerCase();
   const allCustomers = await findUsers({ accountType: { $ne: "admin" } });
 
-  
   if (search === "") {
     const customersResponse = await Promise.all(
       allCustomers.map(async (customer) => getUserResponse(customer))
     );
-    return res.status(200).json(customersResponse);
+
+    return res
+      .status(200)
+      .json(paginatorUtil.paginate(customersResponse, page));
   }
 
   const customers = allCustomers.filter(
@@ -105,13 +117,13 @@ export async function searchCustomersHandler(req: Request, res: Response) {
       getUserIdentifier(customer) === search
   );
 
-  allCustomers.forEach(customer => console.log(getUserIdentifier(customer)));
-
   const customersResponse = await Promise.all(
     customers.map(async (customer) => getUserResponse(customer))
   );
 
-  return res.status(200).json(customersResponse);
+  return res
+  .status(200)
+  .json(paginatorUtil.paginate(customersResponse, page));
 }
 
 export async function getCustomerByIdHandler(req: Request, res: Response) {

@@ -2,8 +2,23 @@ import { Request, Response } from "express";
 import { find } from "lodash";
 
 import { ItemDocument } from "../models/item.model";
-import { createItem, findItem, findItems, getImageUrl, getItemIdentifier, getItemResponse, getMaxItemCode, updateItem } from "../services/item.service";
-import { AddItemQuantityPayload, CreateItemPayload, GetItemByIdPayload, UpdateItemPayload } from "../validations/item.validation";
+import {
+  createItem,
+  findItem,
+  findItems,
+  getImageUrl,
+  getItemIdentifier,
+  getItemResponse,
+  getMaxItemCode,
+  updateItem,
+} from "../services/item.service";
+import paginatorUtil from "../utils/paginator.util";
+import {
+  AddItemQuantityPayload,
+  CreateItemPayload,
+  GetItemByIdPayload,
+  UpdateItemPayload,
+} from "../validations/item.validation";
 
 export async function createItemHandler(
   req: Request<{}, {}, CreateItemPayload["body"]>,
@@ -34,8 +49,6 @@ export async function createItemHandler(
   const itemCode = ((await getMaxItemCode(publishedYear)) || 0) + 1;
   const image = await getImageUrl(rentalType);
 
-  console.log("OK");
-
   const item = await createItem({
     itemCode,
     publishedYear,
@@ -54,6 +67,7 @@ export async function createItemHandler(
 
 export async function getItemsHandler(req: Request, res: Response) {
   const { rentalType, status, desc } = req.query;
+  const page = req.query.page ? +req.query.page : 1;
   const sortBy = req.query.sortBy as string;
   const sort = { [sortBy]: desc ? -1 : 1 };
 
@@ -69,23 +83,28 @@ export async function getItemsHandler(req: Request, res: Response) {
   );
 
   if (!status) {
-    return res.status(200).json(itemsResponse);
+    return res.status(200).json(paginatorUtil.paginate(itemsResponse, page));
   }
 
   if (status === "non-available") {
     const nonAvailableItemsResponse = itemsResponse.filter(
       (item) => item.availableNumber === 0
     );
-    return res.status(200).json(nonAvailableItemsResponse);
+    return res
+      .status(200)
+      .json(paginatorUtil.paginate(nonAvailableItemsResponse, page));
   }
 
   const availableItemsResponse = itemsResponse.filter(
     (item) => item.availableNumber > 0
   );
-  return res.status(200).json(availableItemsResponse);
+  return res
+    .status(200)
+    .json(paginatorUtil.paginate(availableItemsResponse, page));
 }
 
 export async function searchItemsHandler(req: Request, res: Response) {
+  const page = req.query.page ? +req.query.page : 1;
   const search = req.query.search as string;
   const allItems = await findItems({});
 
@@ -93,7 +112,7 @@ export async function searchItemsHandler(req: Request, res: Response) {
     const itemsResponse = await Promise.all(
       allItems.map(async (item) => getItemResponse(item))
     );
-    return res.status(200).json(itemsResponse);
+    return res.status(200).json(paginatorUtil.paginate(itemsResponse, page));
   }
 
   const items = allItems.filter(
@@ -106,7 +125,8 @@ export async function searchItemsHandler(req: Request, res: Response) {
     items.map(async (item) => getItemResponse(item))
   );
 
-  return res.status(200).json(itemsResponse);
+   return res.status(200).json(paginatorUtil.paginate(itemsResponse, page));
+
 }
 
 export async function getItemByIdHandler(

@@ -6,6 +6,7 @@ import { FilterQuery, QueryOptions, UpdateQuery } from "mongoose";
 import UserModel, { UserDocument, UserInput } from "../models/user.model";
 import { getItemNumber } from "./order.service";
 
+const PER_PAGE = 10;
 export interface ValidateUsernameAndPasswordPayload {
   username: string;
   password: string;

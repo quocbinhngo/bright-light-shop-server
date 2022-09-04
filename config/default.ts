@@ -4,7 +4,6 @@ export default {
   SALT: 10,
 
   MONGO_URI:
-    "mongodb+srv://brightlightshop-api:Rmx0gn078XY5tq3l@cluster0.vts82.mongodb.net/?retryWrites=true&w=majority",
-
- 
+    "mongodb+srv://brightlightshop-api:8opbUeeCZVEAyqJZ@cluster0.vts82.mongodb.net/?retryWrites=true&w=majority",
 };
+      
