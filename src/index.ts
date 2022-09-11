@@ -5,7 +5,7 @@ import app from "./app";
 import loggerUtil from "./utils/logger.util";
 import mongoUtil from "./utils/mongo.util";
 
-const PORT = config.get<number>("PORT");
+const PORT = process.env.PORT || 8000;
 const server = http.createServer(app);
 
 server.listen(PORT, async () => {

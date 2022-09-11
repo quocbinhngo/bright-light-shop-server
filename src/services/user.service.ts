@@ -56,16 +56,17 @@ export function getUserFullName(user: UserDocument) {
 
 export function getUserIdentifier(user: UserDocument) {
   return (
-    "C-" + (user.customerCode as number).toString().padStart(3, "0")
-  ).toLowerCase();
+    "C" + ((user.customerCode as number) || 0).toString().padStart(3, "0")
+  );
 }
 
 export function getUserResponse(user: UserDocument) {
-  return omit(user.toJSON(), "password");
+  const identifier = getUserIdentifier(user);
+  return { ...omit(user.toJSON(), "password"), identifier };
 }
 
 export async function hashPassword(password: string) {
-  const salt = await bcrypt.genSalt(config.get<number>("SALT"));
+  const salt = await bcrypt.genSalt(10);
   return await bcrypt.hash(password, salt);
 }
 
@@ -130,7 +131,7 @@ export async function promoteCustomer(customerId: string) {
   const itemNumber = await getItemNumber(customerId);
   console.log("Item number " + itemNumber);
 
-  if (itemNumber >= 5) {
+  if (itemNumber >= 8) {
     await updateUser({ _id: customerId }, { accountType: "vip" });
     return;
   }

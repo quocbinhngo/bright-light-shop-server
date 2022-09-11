@@ -36,7 +36,7 @@ export async function updateItem(
 
 export function getItemIdentifier(item: ItemDocument) {
   return (
-    "I-" +
+    "I" +
     item.itemCode.toString().padStart(3, "0") +
     "-" +
     item.publishedYear.toString()
@@ -52,7 +52,7 @@ export async function getMaxItemCode(publishedYear: number) {
     return 0;
   }
 
-  return items[0].itemCode;
+  return +items[0].itemCode;
 }
 
 export async function getImageUrl(rentalType: string) {
@@ -63,5 +63,6 @@ export async function getImageUrl(rentalType: string) {
 export async function getItemResponse(item: ItemDocument) {
   const item1 = omit(item.toJSON(), ["createdAt", "updatedAt", "__v"]);
   const availableNumber = await getItemAvailableNumber(item1._id);
-  return { ...item1, availableNumber };
+  const identifier = getItemIdentifier(item);
+  return { ...item1, availableNumber, identifier };
 }

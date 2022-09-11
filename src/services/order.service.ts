@@ -60,11 +60,12 @@ export async function getItemAvailableNumber(itemId: string) {
 
   for (const order of rentedOrders) {
     for (const orderDetail of order.orderDetails) {
-      if (orderDetail.itemId !== itemId) {
+      if (orderDetail.itemId.toString() !== item._id.toString()) {
         continue;
       }
 
       rentedNumber += orderDetail.quantity;
+      console.log(rentedNumber);
     }
   }
 
@@ -217,7 +218,7 @@ export async function returnOrder(orderId: string, customerId: string) {
 }
 
 export async function getItemNumber(customerId: string) {
-  const orders = await findOrders({ customerId });
+  const orders = await findOrders({ customerId, returned: true });
   let ans = 0;
 
   for (const order of orders) {

@@ -1,8 +1,10 @@
-import mongoose from "mongoose";
 import config from "config";
+import mongoose from "mongoose";
+
 import loggerUtil from "./logger.util";
 
-const MONGO_URI = config.get<string>("MONGO_URI");
+const MONGO_URI =
+  "mongodb+srv://brightlightshop-api:8opbUeeCZVEAyqJZ@cluster0.vts82.mongodb.net/?retryWrites=true&w=majority";
 
 export default {
   connect: async () => {

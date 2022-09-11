@@ -38,6 +38,15 @@ export async function createOrderHandler(
     return res.status(403).json("Guest account cannot make 2-day rental");
   }
 
+  const totalQuantity = orderDetails.reduce(
+    (value, orderDetail) => value + orderDetail["quantity"],
+    0
+  );
+
+  if (customer.accountType === "guest" && totalQuantity > 2) {
+    return res.status(403).json("Guest account cannot rent more than 2 items");
+  }
+
   // Check whether duplicate item
   if (checkDuplicateItem(orderDetails)) {
     return res.status(400).json("You make a duplicate item selection");
@@ -123,7 +132,9 @@ export async function getAllOrdersHandler(req: Request, res: Response) {
     orders.map(async (order) => await getOrderResponse(order))
   );
 
-  return res.status(200).json(paginatorUtil.paginate(ordersResponse, page));
+  console.log(paginatorUtil.paginate(ordersResponse, page, 5));
+
+  return res.status(200).json(paginatorUtil.paginate(ordersResponse, page, 5));
 }
 
 export async function returnOrderHandler(

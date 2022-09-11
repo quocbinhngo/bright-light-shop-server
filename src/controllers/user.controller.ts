@@ -14,6 +14,7 @@ import {
   updateUser,
 } from "../services/user.service";
 import paginatorUtil from "../utils/paginator.util";
+import sorterUtil from "../utils/sorter.util";
 import {
   AddBalancePayload,
   CreateAccountPayload,
@@ -93,7 +94,18 @@ export async function getCustomershandler(req: Request, res: Response) {
     customers = await findUsers({ accountType }, { sort });
   }
 
-  return res.status(200).json(paginatorUtil.paginate(customers, page));
+  let customersResponse = await Promise.all(
+    customers.map(async (customer) => getUserResponse(customer))
+  );
+
+  if (sortBy === "_id") { 
+    customersResponse = sorterUtil.sortByIdentifier(
+      customersResponse,
+      desc ? -1 : 1
+    );
+  }
+
+  return res.status(200).json(paginatorUtil.paginate(customersResponse, page));
 }
 
 export async function searchCustomersHandler(req: Request, res: Response) {
@@ -121,9 +133,7 @@ export async function searchCustomersHandler(req: Request, res: Response) {
     customers.map(async (customer) => getUserResponse(customer))
   );
 
-  return res
-  .status(200)
-  .json(paginatorUtil.paginate(customersResponse, page));
+  return res.status(200).json(paginatorUtil.paginate(customersResponse, page));
 }
 
 export async function getCustomerByIdHandler(req: Request, res: Response) {

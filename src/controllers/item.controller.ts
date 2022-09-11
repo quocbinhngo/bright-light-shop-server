@@ -13,6 +13,7 @@ import {
   updateItem,
 } from "../services/item.service";
 import paginatorUtil from "../utils/paginator.util";
+import sorterUtil from "../utils/sorter.util";
 import {
   AddItemQuantityPayload,
   CreateItemPayload,
@@ -66,7 +67,8 @@ export async function createItemHandler(
 }
 
 export async function getItemsHandler(req: Request, res: Response) {
-  const { rentalType, status, desc } = req.query;
+  const { rentalType, status } = req.query;
+  const desc = req.query.desc as string;
   const page = req.query.page ? +req.query.page : 1;
   const sortBy = req.query.sortBy as string;
   const sort = { [sortBy]: desc ? -1 : 1 };
@@ -78,9 +80,13 @@ export async function getItemsHandler(req: Request, res: Response) {
     items = await findItems({}, { sort });
   }
 
-  const itemsResponse = await Promise.all(
+  let itemsResponse = await Promise.all(
     items.map(async (item) => getItemResponse(item))
   );
+
+  if (sortBy === "_id") {
+    itemsResponse = sorterUtil.sortByIdentifier(itemsResponse, desc ? -1 : 1);
+  }
 
   if (!status) {
     return res.status(200).json(paginatorUtil.paginate(itemsResponse, page));
@@ -125,8 +131,7 @@ export async function searchItemsHandler(req: Request, res: Response) {
     items.map(async (item) => getItemResponse(item))
   );
 
-   return res.status(200).json(paginatorUtil.paginate(itemsResponse, page));
-
+  return res.status(200).json(paginatorUtil.paginate(itemsResponse, page));
 }
 
 export async function getItemByIdHandler(
