@@ -129,7 +129,6 @@ export async function promoteCustomer(customerId: string) {
   }
 
   const itemNumber = await getItemNumber(customerId);
-  console.log("Item number " + itemNumber);
 
   if (itemNumber >= 8) {
     await updateUser({ _id: customerId }, { accountType: "vip" });

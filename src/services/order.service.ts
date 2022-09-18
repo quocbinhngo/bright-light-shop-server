@@ -65,7 +65,6 @@ export async function getItemAvailableNumber(itemId: string) {
       }
 
       rentedNumber += orderDetail.quantity;
-      console.log(rentedNumber);
     }
   }
 
@@ -77,19 +76,21 @@ export async function getOrderResponse(order: OrderDocument) {
     order.orderDetails
   )) as Array<OrderDetailWithItem>;
 
-  const orderDetailsWithItemAndAvailableNumber = await Promise.all(
-    orderDetailsWithItem.map(async (orderDetailWithItem) => {
-      return {
-        item: {
-          ...orderDetailWithItem.item.toJSON(),
-          availableNumber: await getItemAvailableNumber(
-            orderDetailWithItem.item._id
-          ),
-        },
-        quantity: orderDetailWithItem.quantity,
-      };
-    })
-  );
+  let orderDetailsWithItemAndAvailableNumber: Array<any> = [];
+  for (let orderDetailWithItem of orderDetailsWithItem) {
+    const orderDetailWithItemAndAvailableNumber = {
+      item: {
+        ...orderDetailWithItem.item.toJSON(),
+        availableNumber: await getItemAvailableNumber(
+          orderDetailWithItem.item._id
+        ),
+      },
+      quantity: orderDetailWithItem.quantity,
+    };
+    orderDetailsWithItemAndAvailableNumber.push(
+      orderDetailWithItemAndAvailableNumber
+    );
+  }
 
   return {
     ...omit(order.toJSON(), "orderDetails"),
@@ -109,9 +110,6 @@ export async function getOrderDetailsWithItem(
     }
 
     const availableNumber = await getItemAvailableNumber(item._id);
-    if (availableNumber < orderDetail.quantity) {
-      return `Item ${item.title} has only ${availableNumber} items`;
-    }
 
     orderDetailsWithItem.push({
       item,
@@ -120,6 +118,24 @@ export async function getOrderDetailsWithItem(
   }
 
   return orderDetailsWithItem;
+}
+
+export async function checkItemQuantityMoreThanAvailableNumber(
+  orderDetailsWithItem: Array<any>
+) {
+  for (let orderDetailWithItem of orderDetailsWithItem) {
+    if (orderDetailWithItem === null) {
+      return "Item is not existed";
+    }
+
+    if (
+      orderDetailWithItem.item.availableNumber < orderDetailWithItem.quantity
+    ) {
+      return `Item ${orderDetailWithItem.item.name} is not enough`;
+    }
+  }
+
+  return null;
 }
 
 export async function processOrder(

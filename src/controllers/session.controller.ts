@@ -7,14 +7,18 @@ export async function createSessionHandler(
   req: Request<{}, {}, CreateSessionPayload["body"]>,
   res: Response
 ) {
-  const { username, password } = req.body;
+  try {
+    const { username, password } = req.body;
 
-  const user = await validateUsernameAndPassword({ username, password });
-  if (!user) {
-    return res.status(400).json("Wrong username or password");
+    const user = await validateUsernameAndPassword({ username, password });
+    if (!user) {
+      return res.status(400).json("Wrong username or password");
+    }
+
+    const userResponse = getUserResponse(user);
+
+    return res.status(200).json(userResponse);
+  } catch (error: any) {
+    return res.status(500).json("Cannot login to account");
   }
-
-  const userResponse = getUserResponse(user);
-
-  return res.status(200).json(userResponse);
 }
